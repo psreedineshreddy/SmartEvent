@@ -40,7 +40,9 @@ SmartEvent is a full-stack event discovery and ticket booking application built 
 - CSS
 
 ## Project Structure
+## Project Structure
 
+```text
 SmartEvent/
 ├── backend/
 │   ├── app/
@@ -63,7 +65,9 @@ SmartEvent/
 │   │   └── pages/
 │   ├── package.json
 │   └── vite.config.js
-├── screenshots/ 
+│
+├── Screenshots/
+│
 └── README.md
 
 
