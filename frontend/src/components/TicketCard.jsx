@@ -1,6 +1,6 @@
 const SERVER_URL = "http://127.0.0.1:8000";
 
-function TicketCard({ ticket, eventName }) {
+function TicketCard({ ticket, eventName, displayNumber }) {
   const qrUrl = `${SERVER_URL}${ticket.qr_code_url}`;
 
   const downloadQr = () => {
@@ -14,7 +14,7 @@ function TicketCard({ ticket, eventName }) {
     <div className="ticket-card">
       <div className="ticket-card-header">
         <h2>My Ticket</h2>
-        <span>#{ticket.id}</span>
+        <span>#{displayNumber}</span>
       </div>
 
       <div className="ticket-event-name">

@@ -1,3 +1,4 @@
+
 import os
 import uuid
 
@@ -7,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies import get_current_user
+from app.dependencies import require_role
 from app.models.booking import Booking
 from app.models.event import Event
 from app.models.ticket import Ticket
@@ -41,7 +42,7 @@ router = APIRouter(
 def create_booking(
     booking_data: BookingCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_role("USER"))
 ):
     event = db.query(Event).filter(
         Event.id == booking_data.event_id
@@ -53,16 +54,19 @@ def create_booking(
             detail="Event not found"
         )
 
+    if event.event_status in ["CANCELLED", "COMPLETED"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Event is not available for booking"
+        )
+
     if event.available_tickets < booking_data.ticket_quantity:
         raise HTTPException(
             status_code=400,
             detail="Not enough tickets available"
         )
 
-    total_price = (
-        event.ticket_price * booking_data.ticket_quantity
-    )
-
+    total_price = event.ticket_price * booking_data.ticket_quantity
     qr_path = None
 
     try:
@@ -80,12 +84,10 @@ def create_booking(
         db.flush()
 
         ticket_code = str(uuid.uuid4()).upper()
-
         qr = qrcode.make(ticket_code)
 
         qr_filename = f"{ticket_code}.png"
         qr_path = os.path.join(QR_DIR, qr_filename)
-
         qr.save(qr_path)
 
         ticket = Ticket(
@@ -93,26 +95,29 @@ def create_booking(
             ticket_code=ticket_code,
             qr_code_url=f"/static/qr_codes/{qr_filename}"
         )
-
         db.add(ticket)
 
         notification = Notification(
             user_id=current_user.id,
             title="Booking Confirmed",
-            message=(
-                f"Your booking for {event.title} "
-                "has been confirmed."
-            ),
+            message=f"Your booking for {event.title} has been confirmed.",
             type="BOOKING",
             is_read=False
         )
-
         db.add(notification)
 
         db.commit()
         db.refresh(booking)
 
-        return booking
+        return {
+            "id": booking.id,
+            "user_id": booking.user_id,
+            "event_id": booking.event_id,
+            "event_title": event.title,
+            "ticket_quantity": booking.ticket_quantity,
+            "total_price": booking.total_price,
+            "booking_status": booking.booking_status,
+        }
 
     except SQLAlchemyError:
         db.rollback()
@@ -143,8 +148,53 @@ def create_booking(
 )
 def get_my_bookings(
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_role("USER"))
 ):
-    return db.query(Booking).filter(
-        Booking.user_id == current_user.id
-    ).all()
+    bookings = (
+        db.query(Booking, Event.title.label("event_title"))
+        .join(Event, Booking.event_id == Event.id)
+        .filter(Booking.user_id == current_user.id)
+        .all()
+    )
+
+    return [
+        {
+            "id": booking.id,
+            "user_id": booking.user_id,
+            "event_id": booking.event_id,
+            "event_title": event_title,
+            "ticket_quantity": booking.ticket_quantity,
+            "total_price": booking.total_price,
+            "booking_status": booking.booking_status,
+        }
+        for booking, event_title in bookings
+    ]
+
+
+@router.get(
+    "/organizer/my-bookings",
+    response_model=list[BookingResponse]
+)
+def get_organizer_bookings(
+    db: Session = Depends(get_db),
+    current_user=Depends(require_role("ORGANIZER"))
+):
+    bookings = (
+        db.query(Booking, Event.title.label("event_title"))
+        .join(Event, Booking.event_id == Event.id)
+        .filter(Event.organizer_id == current_user.id)
+        .all()
+    )
+
+    return [
+        {
+            "id": booking.id,
+            "user_id": booking.user_id,
+            "event_id": booking.event_id,
+            "event_title": event_title,
+            "ticket_quantity": booking.ticket_quantity,
+            "total_price": booking.total_price,
+            "booking_status": booking.booking_status,
+        }
+        for booking, event_title in bookings
+    ]

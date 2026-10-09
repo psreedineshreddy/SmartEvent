@@ -33,38 +33,58 @@ function Tickets() {
   }, []);
 
   if (loading) {
-    return <p className="status-message">Loading tickets...</p>;
+    return (
+      <main className="tickets-page">
+        <p className="status-message">Loading tickets...</p>
+      </main>
+    );
   }
 
   if (error) {
-    return <p className="error-message page-message">{error}</p>;
+    return (
+      <main className="tickets-page">
+        <p className="error-message page-message">{error}</p>
+      </main>
+    );
   }
 
   return (
-    <main className="page-container">
+    <main className="tickets-page">
       <div className="page-header">
         <h1>My Tickets</h1>
         <p>Your confirmed event tickets and QR codes.</p>
       </div>
 
       {tickets.length === 0 ? (
-        <p className="status-message">No tickets found.</p>
+        <div className="empty-state">
+          <div className="empty-state-icon">🎟️</div>
+          <h2>No tickets yet</h2>
+          <p>
+            Your confirmed event tickets will appear here after
+            you make a booking.
+          </p>
+        </div>
       ) : (
         <div className="tickets-grid">
-          {tickets.map((ticket) => {
+          {tickets.map((ticket, index) => {
             const booking = bookings.find(
               (booking) => booking.id === ticket.booking_id
             );
 
             const event = booking
-              ? events.find((event) => event.id === booking.event_id)
+              ? events.find(
+                  (event) => event.id === booking.event_id
+                )
               : null;
 
             return (
               <TicketCard
                 key={ticket.id}
                 ticket={ticket}
-                eventName={event ? event.title : "Event unavailable"}
+                displayNumber={index + 1}
+                eventName={
+                  event ? event.title : "Event unavailable"
+                }
               />
             );
           })}

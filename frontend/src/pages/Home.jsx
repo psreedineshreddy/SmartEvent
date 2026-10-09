@@ -34,47 +34,66 @@ function Home() {
   }, [search, category]);
 
   return (
-    <main className="page-container">
-      <div className="page-header">
-        <h1>Discover Events</h1>
-        <p>Find exciting events and book your tickets.</p>
-      </div>
+    <main className="home-page">
+      <section className="home-hero">
+        <div>
+          <span className="hero-label">SMARTEVENT</span>
 
-      <div className="event-filters">
-        <input
-          type="text"
-          placeholder="Search events..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+          <h1>Discover Events You'll Love</h1>
 
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        >
-          <option value="">All Categories</option>
-          <option value="Music">Music</option>
-          <option value="Tech">Tech</option>
-          <option value="Sports">Sports</option>
-          <option value="Business">Business</option>
-        </select>
-      </div>
-
-      {loading && <p className="status-message">Loading events...</p>}
-
-      {error && <p className="error-message">{error}</p>}
-
-      {!loading && !error && events.length === 0 && (
-        <p className="status-message">No events found.</p>
-      )}
-
-      {!loading && !error && events.length > 0 && (
-        <div className="event-grid">
-          {events.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
+          <p>
+            Explore exciting events, find your favorites, and book your
+            tickets with ease.
+          </p>
         </div>
-      )}
+      </section>
+
+      <section className="events-section">
+        <div className="page-header">
+          <h2>Explore Events</h2>
+          <p>Find the perfect event for you.</p>
+        </div>
+
+        <div className="event-filters">
+          <div className="search-box">
+            <input
+              type="text"
+              placeholder="Search events..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          <div className="category-box">
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            >
+              <option value="">All Categories</option>
+              <option value="Music">Music</option>
+              <option value="Tech">Tech</option>
+              <option value="Sports">Sports</option>
+              <option value="Business">Business</option>
+            </select>
+          </div>
+        </div>
+
+        {loading && <p className="status-message">Loading events...</p>}
+
+        {error && <p className="error-message">{error}</p>}
+
+        {!loading && !error && events.length === 0 && (
+          <p className="status-message">No events found.</p>
+        )}
+
+        {!loading && !error && events.length > 0 && (
+          <div className="event-grid">
+            {events.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+        )}
+      </section>
     </main>
   );
 }

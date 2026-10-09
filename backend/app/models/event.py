@@ -16,7 +16,15 @@ class Event(Base):
     ticket_price = Column(Float, nullable=False)
     available_tickets = Column(Integer, nullable=False, default=100)
     banner_image = Column(String(500), nullable=True)
+
+    organizer_id = Column(Integer, nullable=True)
+    event_status = Column(
+        String(20),
+        nullable=False,
+        default="UPCOMING"
+    )
+
     created_at = Column(
-    DateTime,
-    default=lambda: datetime.now(timezone.utc)
-)
+        DateTime,
+        default=lambda: datetime.now(timezone.utc)
+    )

@@ -24,3 +24,4 @@ frontend/node_modules/
 
 # Frontend build
 frontend/dist/
+backend/smartevent_backup.db

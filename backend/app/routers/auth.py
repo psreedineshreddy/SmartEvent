@@ -13,13 +13,14 @@ from app.dependencies import SECRET_KEY, ALGORITHM
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 
-def create_access_token(user_id: int):
+def create_access_token(user_id: int, role: str):
     expire = datetime.now(timezone.utc) + timedelta(hours=2)
 
     payload = {
-        "user_id": user_id,
-        "exp": expire,
-    }
+    "user_id": user_id,
+    "role": role,
+    "exp": expire,
+}
 
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -42,10 +43,11 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
     ).decode("utf-8")
 
     user = User(
-        username=user_data.username,
-        email=user_data.email,
-        hashed_password=hashed_password
-    )
+    username=user_data.username,
+    email=user_data.email,
+    hashed_password=hashed_password,
+    role=user_data.role
+)
 
     db.add(user)
     db.commit()
@@ -72,7 +74,7 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
             detail="Invalid email or password"
         )
 
-    token = create_access_token(user.id)
+    token = create_access_token(user.id, user.role)
 
     return {
         "access_token": token,

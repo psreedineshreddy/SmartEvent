@@ -7,6 +7,7 @@ function EventDetails() {
   const { eventId } = useParams();
   const navigate = useNavigate();
   const { saveBooking } = useBooking();
+  
 
   const [event, setEvent] = useState(null);
   const [quantity, setQuantity] = useState(1);
@@ -43,11 +44,11 @@ function EventDetails() {
       });
 
       saveBooking({
-  booking: response.data,
-  event: event,
-});
+        booking: response.data,
+        event: event,
+      });
 
-navigate("/booking-confirmation");
+      navigate("/booking-confirmation");
     } catch (err) {
       setError(
         err.response?.data?.detail ||
@@ -71,99 +72,120 @@ navigate("/booking-confirmation");
   }
 
   return (
-    <main className="page-container">
-      <div className="event-details">
-        <img
-          className="event-details-image"
-          src={event.banner_image}
-          alt={event.title}
-        />
+    <main className="event-details-page">
+      <div className="event-details-layout">
+        <section className="event-details-main">
+          <div className="event-details-image-wrapper">
+            <img
+              className="event-details-image"
+              src={event.banner_image}
+              alt={event.title}
+            />
+          </div>
 
-        <div className="event-details-content">
-          <span className="event-category">
-            {event.category}
-          </span>
+          <div className="event-details-content">
+            <span className="event-category">
+              {event.category}
+            </span>
 
-          <h1>{event.title}</h1>
+            <h1>{event.title}</h1>
 
-          <p className="event-details-description">
-            {event.description}
-          </p>
-
-          <div className="event-details-info">
-            <p>📍Location: {event.location}</p>
-
-            <p>
-              📅 Date:{" "}
-              {new Date(event.event_date).toLocaleString()}
+            <p className="event-details-description">
+              {event.description}
             </p>
 
-            <p>🎟️ {event.available_tickets} tickets available</p>
+            <div className="event-details-info">
+              <div>
+                <span>📍</span>
+                <p>
+                  <strong>Location</strong>
+                  {event.location}
+                </p>
+              </div>
+
+              <div>
+                <span>📅</span>
+                <p>
+                  <strong>Date & Time</strong>
+                  {new Date(event.event_date).toLocaleString()}
+                </p>
+              </div>
+
+              <div>
+                <span>🎟️</span>
+                <p>
+                  <strong>Availability</strong>
+                  {event.available_tickets} tickets available
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside className="booking-box">
+          <div className="booking-heading">
+            <span className="price-label">Ticket Price</span>
+
+            <strong className="details-price">
+              ₹{event.ticket_price}
+            </strong>
           </div>
 
-          <div className="booking-box">
-            <div>
-              <span className="price-label">
-                Ticket Price
-              </span>
+          <div className="quantity-control">
+            <label htmlFor="ticket-quantity">
+              Number of Tickets
+            </label>
 
-              <strong className="details-price">
-                ₹{event.ticket_price}
-              </strong>
-            </div>
-
-            <div className="quantity-control">
-              <label>Quantity</label>
-
-              <select
-                value={quantity}
-                onChange={(e) =>
-                  setQuantity(Number(e.target.value))
-                }
-              >
-                {Array.from(
-                  {
-                    length: Math.min(
-                      event.available_tickets,
-                      10
-                    ),
-                  },
-                  (_, index) => index + 1
-                ).map((number) => (
-                  <option key={number} value={number}>
-                    {number}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="booking-total">
-              <span>Total</span>
-              <strong>
-                ₹{event.ticket_price * quantity}
-              </strong>
-            </div>
-
-            {error && (
-              <p className="form-error">{error}</p>
-            )}
-
-            <button
-              className="primary-button"
-              onClick={handleBooking}
-              disabled={
-                booking ||
-                event.available_tickets === 0
+            <select
+              id="ticket-quantity"
+              value={quantity}
+              onChange={(e) =>
+                setQuantity(Number(e.target.value))
               }
             >
-              {event.available_tickets === 0
-                ? "Sold Out"
-                : booking
-                  ? "Booking..."
-                  : "Book Tickets"}
-            </button>
+              {Array.from(
+                {
+                  length: Math.min(
+                    event.available_tickets,
+                    10
+                  ),
+                },
+                (_, index) => index + 1
+              ).map((number) => (
+                <option key={number} value={number}>
+                  {number}
+                </option>
+              ))}
+            </select>
           </div>
-        </div>
+
+          <div className="booking-total">
+            <span>Total</span>
+
+            <strong>
+              ₹{event.ticket_price * quantity}
+            </strong>
+          </div>
+
+          {error && (
+            <p className="form-error">{error}</p>
+          )}
+
+          <button
+            className="primary-button"
+            onClick={handleBooking}
+            disabled={
+              booking ||
+              event.available_tickets === 0
+            }
+          >
+            {event.available_tickets === 0
+              ? "Sold Out"
+              : booking
+                ? "Booking..."
+                : "Book Tickets"}
+          </button>
+        </aside>
       </div>
     </main>
   );

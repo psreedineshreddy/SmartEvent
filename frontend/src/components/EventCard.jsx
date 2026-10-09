@@ -1,32 +1,45 @@
+
 import { Link } from "react-router-dom";
 
 function EventCard({ event }) {
-  return (
-    <div className="event-card">
-      <img
-        className="event-card-image"
-        src={event.banner_image}
-        alt={event.title}
-      />
+  const status = event.event_status || "UPCOMING";
 
-      <div className="event-card-content">
+  const statusClass = status.toLowerCase();
+
+  return (
+    <article className="event-card">
+      <div className="event-card-image-wrapper">
+        <img
+          className="event-card-image"
+          src={event.banner_image}
+          alt={event.title}
+        />
+
         <span className="event-category">
           {event.category}
         </span>
 
+        <span className={`event-status-badge ${statusClass}`}>
+          {status}
+        </span>
+      </div>
+
+      <div className="event-card-content">
         <h2>{event.title}</h2>
 
         <p className="event-description">
           {event.description}
         </p>
 
-        <p className="event-info">
-          📍 {event.location}
-        </p>
+        <div className="event-details">
+          <p className="event-info">
+            📍 {event.location}
+          </p>
 
-        <p className="event-info">
-          📅 {new Date(event.event_date).toLocaleDateString()}
-        </p>
+          <p className="event-info">
+            📅 {new Date(event.event_date).toLocaleDateString()}
+          </p>
+        </div>
 
         <div className="event-card-footer">
           <strong>₹{event.ticket_price}</strong>
@@ -39,7 +52,7 @@ function EventCard({ event }) {
           </Link>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 

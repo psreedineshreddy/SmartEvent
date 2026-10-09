@@ -28,33 +28,56 @@ function BookingHistory() {
   }, []);
 
   if (loading) {
-    return <p className="status-message">Loading booking history...</p>;
+    return (
+      <main className="page-container">
+        <p className="status-message">Loading booking history...</p>
+      </main>
+    );
   }
 
   if (error) {
-    return <p className="error-message page-message">{error}</p>;
+    return (
+      <main className="page-container">
+        <p className="error-message page-message">{error}</p>
+      </main>
+    );
   }
 
   return (
-    <main className="page-container">
+    <main className="booking-history-page">
       <div className="page-header">
         <h1>My Booking History</h1>
-        <p>View your previous event bookings.</p>
+        <p>View and manage your event bookings.</p>
       </div>
 
       {bookings.length === 0 ? (
-        <p className="status-message">No bookings found.</p>
+        <div className="empty-state">
+          <div className="empty-state-icon">📅</div>
+          <h2>No bookings yet</h2>
+          <p>
+            You haven't booked any events yet. Explore events and
+            find something you like.
+          </p>
+        </div>
       ) : (
         <div className="booking-history-grid">
-          {bookings.map((booking) => {
+          {bookings.map((booking, index) => {
             const event = events.find(
               (event) => event.id === booking.event_id
             );
 
             return (
-              <div className="booking-history-card" key={booking.id}>
+              <article
+                className="booking-history-card"
+                key={booking.id}
+              >
                 <div className="booking-card-header">
-                  <h2>Booking #{booking.id}</h2>
+                  <div>
+                    <span className="booking-label">
+                      Booking
+                    </span>
+                    <h2>#{index + 1}</h2>
+                  </div>
 
                   <span
                     className={`booking-status ${booking.booking_status.toLowerCase()}`}
@@ -66,7 +89,9 @@ function BookingHistory() {
                 <div className="booking-event-name">
                   <span>Event</span>
                   <strong>
-                    {event ? event.title : `Event #${booking.event_id}`}
+                    {event
+                      ? event.title
+                      : `Event #${booking.event_id}`}
                   </strong>
                 </div>
 
@@ -81,7 +106,7 @@ function BookingHistory() {
                     <strong>₹{booking.total_price}</strong>
                   </div>
                 </div>
-              </div>
+              </article>
             );
           })}
         </div>

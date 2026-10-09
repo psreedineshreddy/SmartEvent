@@ -6,13 +6,17 @@ from app.dependencies import get_current_user
 from app.models.notification import Notification
 from app.schemas.notification import NotificationResponse
 
+
 router = APIRouter(
     prefix="/api/notifications",
     tags=["Notifications"]
 )
 
 
-@router.get("/", response_model=list[NotificationResponse])
+@router.get(
+    "/",
+    response_model=list[NotificationResponse]
+)
 def get_my_notifications(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
@@ -47,6 +51,7 @@ def mark_notification_as_read(
         )
 
     notification.is_read = True
+
     db.commit()
 
     return {

@@ -6,12 +6,17 @@ function BookingConfirmation() {
 
   if (!booking) {
     return (
-      <main className="page-container">
+      <main className="confirmation-page">
         <div className="confirmation-card">
-          <h1>Booking Confirmation</h1>
-          <p>Booking details are not available.</p>
+          <div className="confirmation-icon error-icon">!</div>
 
-          <Link to="/" className="view-button">
+          <h1>Booking Confirmation</h1>
+
+          <p className="confirmation-message">
+            Booking details are not available.
+          </p>
+
+          <Link to="/" className="primary-button confirmation-button">
             Back to Events
           </Link>
         </div>
@@ -27,7 +32,7 @@ function BookingConfirmation() {
   };
 
   return (
-    <main className="page-container">
+    <main className="confirmation-page">
       <div className="confirmation-card">
         <div className="confirmation-icon">✓</div>
 
@@ -57,12 +62,17 @@ function BookingConfirmation() {
 
           <div>
             <span>Status</span>
-            <strong>{bookingData.booking_status}</strong>
+            <strong className="booking-status">
+              {bookingData.booking_status}
+            </strong>
           </div>
         </div>
 
         <div className="confirmation-actions">
-          <Link to="/tickets" className="primary-button">
+          <Link
+            to="/tickets"
+            className="primary-button"
+          >
             View My Ticket
           </Link>
 

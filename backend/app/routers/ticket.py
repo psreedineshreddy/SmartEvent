@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies import get_current_user
+from app.dependencies import require_role
 from app.models.booking import Booking
 from app.models.ticket import Ticket
 from app.models.event import Event
@@ -21,7 +21,7 @@ router = APIRouter(
 )
 def get_my_tickets(
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_role("USER"))
 ):
     tickets = (
         db.query(Ticket)
@@ -41,7 +41,8 @@ def get_my_tickets(
 @router.get("/verify/{ticket_code}")
 def verify_ticket(
     ticket_code: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user=Depends(require_role("ADMIN"))
 ):
     ticket = (
         db.query(Ticket)
