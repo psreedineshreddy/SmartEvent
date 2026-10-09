@@ -87,13 +87,8 @@ SmartEvent/
 │   │   └── pages/
 │   ├── package.json
 │   └── vite.config.js
-<<<<<<< HEAD
-│
-├── Screenshots/
-│
-=======
-├── Phase2_Screenshots/
->>>>>>> b5961c5 (Complete SmartEvent Phase 2)
+├── Screenshots Phase 1/
+├── Phase 2 Screenshots/
 └── README.md
 ```
 
