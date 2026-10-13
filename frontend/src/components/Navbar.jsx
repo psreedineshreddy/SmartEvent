@@ -24,10 +24,15 @@ function Navbar() {
 
   return (
     <nav className="navbar">
-      <Link to={homePath} className="navbar-brand">
-        <span className="brand-icon">S</span>
-        <span>SmartEvent</span>
-      </Link>
+
+<Link to={homePath} className="navbar-brand">
+  <img
+    src="/smartevent-logo.png"
+    alt="SmartEvent logo"
+    className="brand-logo"
+  />
+</Link>
+
 
       <div className="navbar-links">
         {/* USER */}
@@ -36,6 +41,7 @@ function Navbar() {
             <Link to="/">Events</Link>
             <Link to="/booking-history">My Bookings</Link>
             <Link to="/tickets">My Tickets</Link>
+            <Link to="/payments">My Payments</Link>
             <Link to="/notifications">Notifications</Link>
             <NotificationDropdown />
           </>

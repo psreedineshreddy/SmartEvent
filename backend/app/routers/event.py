@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -15,7 +18,7 @@ router = APIRouter(prefix="/api/events", tags=["Events"])
 def create_event(
     event_data: EventCreate,
     current_user=Depends(require_role("ORGANIZER")),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     event = Event(
         title=event_data.title,
@@ -27,12 +30,95 @@ def create_event(
         available_tickets=event_data.available_tickets,
         banner_image=event_data.banner_image,
         organizer_id=current_user.id,
-        event_status="UPCOMING"
+        event_status="UPCOMING",
     )
 
     db.add(event)
     db.commit()
     db.refresh(event)
+    return event
+
+
+@router.get("/", response_model=list[EventResponse])
+def get_events(
+    search: str | None = None,
+    category: str | None = None,
+    location: str | None = None,
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
+    sort_by: str = "date",
+    db: Session = Depends(get_db),
+):
+    query = db.query(Event)
+
+    if search:
+        query = query.filter(Event.title.ilike(f"%{search.strip()}%"))
+
+    if category:
+        query = query.filter(Event.category.ilike(category.strip()))
+
+    if location:
+        query = query.filter(Event.location.ilike(f"%{location.strip()}%"))
+
+    if start_date and end_date and start_date > end_date:
+        raise HTTPException(
+            status_code=400,
+            detail="start_date cannot be later than end_date",
+        )
+
+    if start_date:
+        query = query.filter(Event.event_date >= start_date)
+
+    if end_date:
+        query = query.filter(Event.event_date <= end_date)
+
+    # Sorting
+    if sort_by == "date":
+        query = query.order_by(Event.event_date.asc())
+
+    elif sort_by == "date_desc":
+        query = query.order_by(Event.event_date.desc())
+
+    elif sort_by == "price":
+        query = query.order_by(Event.ticket_price.asc())
+
+    elif sort_by == "price_desc":
+        query = query.order_by(Event.ticket_price.desc())
+
+    elif sort_by == "popularity":
+        query = (
+            query.outerjoin(Booking, Booking.event_id == Event.id)
+            .filter(
+                (Booking.id.is_(None))
+                | (Booking.booking_status == "CONFIRMED")
+            )
+            .group_by(Event.id)
+            .order_by(
+                func.coalesce(func.sum(Booking.ticket_quantity), 0).desc()
+            )
+        )
+
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "sort_by must be date, date_desc, price, "
+                "price_desc, or popularity"
+            ),
+        )
+
+    return query.all()
+
+
+@router.get("/{event_id}", response_model=EventResponse)
+def get_event(
+    event_id: int,
+    db: Session = Depends(get_db),
+):
+    event = db.query(Event).filter(Event.id == event_id).first()
+
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
 
     return event
 
@@ -42,20 +128,17 @@ def update_event(
     event_id: int,
     event_data: EventUpdate,
     current_user=Depends(require_role("ORGANIZER")),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     event = db.query(Event).filter(Event.id == event_id).first()
 
     if not event:
-        raise HTTPException(
-            status_code=404,
-            detail="Event not found"
-        )
+        raise HTTPException(status_code=404, detail="Event not found")
 
     if event.organizer_id != current_user.id:
         raise HTTPException(
             status_code=403,
-            detail="You can only update your own events"
+            detail="You can only update your own events",
         )
 
     update_data = event_data.model_dump(exclude_unset=True)
@@ -67,28 +150,27 @@ def update_event(
         db.query(Booking)
         .filter(
             Booking.event_id == event.id,
-            Booking.booking_status == "CONFIRMED"
+            Booking.booking_status == "CONFIRMED",
         )
         .all()
     )
 
     for booking in bookings:
-        notification = Notification(
-            user_id=booking.user_id,
-            title="Event Updated",
-            message=(
-                f"The event '{event.title}' has been updated. "
-                "Please check the latest event details."
-            ),
-            type="EVENT",
-            is_read=False
+        db.add(
+            Notification(
+                user_id=booking.user_id,
+                title="Event Updated",
+                message=(
+                    f"The event '{event.title}' has been updated. "
+                    "Please check the latest event details."
+                ),
+                type="EVENT",
+                is_read=False,
+            )
         )
-
-        db.add(notification)
 
     db.commit()
     db.refresh(event)
-
     return event
 
 
@@ -96,27 +178,21 @@ def update_event(
 def cancel_event(
     event_id: int,
     current_user=Depends(require_role("ORGANIZER")),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     event = db.query(Event).filter(Event.id == event_id).first()
 
     if not event:
-        raise HTTPException(
-            status_code=404,
-            detail="Event not found"
-        )
+        raise HTTPException(status_code=404, detail="Event not found")
 
     if event.organizer_id != current_user.id:
         raise HTTPException(
             status_code=403,
-            detail="You can only cancel your own events"
+            detail="You can only cancel your own events",
         )
 
     if event.event_status == "CANCELLED":
-        raise HTTPException(
-            status_code=400,
-            detail="Event is already cancelled"
-        )
+        raise HTTPException(status_code=400, detail="Event is already cancelled")
 
     event.event_status = "CANCELLED"
 
@@ -124,34 +200,31 @@ def cancel_event(
         db.query(Booking)
         .filter(
             Booking.event_id == event.id,
-            Booking.booking_status == "CONFIRMED"
+            Booking.booking_status == "CONFIRMED",
         )
         .all()
     )
 
     for booking in bookings:
-        notification = Notification(
-            user_id=booking.user_id,
-            title="Event Cancelled",
-            message=(
-                f"The event '{event.title}' has been cancelled."
-            ),
-            type="EVENT",
-            is_read=False
+        db.add(
+            Notification(
+                user_id=booking.user_id,
+                title="Event Cancelled",
+                message=f"The event '{event.title}' has been cancelled.",
+                type="EVENT",
+                is_read=False,
+            )
         )
-
-        db.add(notification)
 
     db.commit()
     db.refresh(event)
-
     return event
 
 
 @router.get("/organizer/my-events", response_model=list[EventResponse])
 def get_my_events(
     current_user=Depends(require_role("ORGANIZER")),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     return (
         db.query(Event)
@@ -163,7 +236,7 @@ def get_my_events(
 @router.get("/organizer/insights")
 def get_organizer_insights(
     current_user=Depends(require_role("ORGANIZER")),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     events = (
         db.query(Event)
@@ -180,68 +253,37 @@ def get_organizer_insights(
             .all()
         )
 
-        tickets_sold = sum(
-            booking.ticket_quantity
+        confirmed_bookings = [
+            booking
             for booking in bookings
             if booking.booking_status == "CONFIRMED"
+        ]
+
+        tickets_sold = sum(
+            booking.ticket_quantity for booking in confirmed_bookings
         )
 
         total_revenue = sum(
-            booking.total_price
-            for booking in bookings
-            if booking.booking_status == "CONFIRMED"
+            booking.final_amount
+            if booking.final_amount is not None
+            else booking.total_price
+            for booking in confirmed_bookings
         )
 
-        booking_count = sum(
-            1
-            for booking in bookings
-            if booking.booking_status == "CONFIRMED"
+        insights.append(
+            {
+                "event_id": event.id,
+                "event_title": event.title,
+                "event_status": event.event_status,
+                "tickets_sold": tickets_sold,
+                "remaining_tickets": (
+                    0
+                    if event.event_status == "CANCELLED"
+                    else event.available_tickets
+                ),
+                "booking_count": len(confirmed_bookings),
+                "total_revenue": total_revenue,
+            }
         )
-
-        insights.append({
-            "event_id": event.id,
-            "event_title": event.title,
-            "event_status": event.event_status,
-            "tickets_sold": tickets_sold,
-            "remaining_tickets": (
-    0 if event.event_status == "CANCELLED"
-    else event.available_tickets
-),
-            "booking_count": booking_count,
-            "total_revenue": total_revenue
-        })
 
     return insights
-
-
-@router.get("/", response_model=list[EventResponse])
-def get_events(
-    search: str | None = None,
-    category: str | None = None,
-    db: Session = Depends(get_db)
-):
-    query = db.query(Event)
-
-    if search:
-        query = query.filter(Event.title.ilike(f"%{search}%"))
-
-    if category:
-        query = query.filter(Event.category.ilike(category))
-
-    return query.all()
-
-
-@router.get("/{event_id}", response_model=EventResponse)
-def get_event(
-    event_id: int,
-    db: Session = Depends(get_db)
-):
-    event = db.query(Event).filter(Event.id == event_id).first()
-
-    if not event:
-        raise HTTPException(
-            status_code=404,
-            detail="Event not found"
-        )
-
-    return event

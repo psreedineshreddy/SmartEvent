@@ -85,6 +85,7 @@ function Tickets() {
                 eventName={
                   event ? event.title : "Event unavailable"
                 }
+                eventStatus={event ? event.event_status : "UNKNOWN"}
               />
             );
           })}

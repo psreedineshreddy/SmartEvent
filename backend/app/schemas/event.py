@@ -23,6 +23,12 @@ class EventUpdate(BaseModel):
     ticket_price: float | None = None
     available_tickets: int | None = None
     banner_image: str | None = None
+    event_status: Literal[
+    "UPCOMING",
+    "ONGOING",
+    "COMPLETED",
+    "CANCELLED"
+] | None = None
 
 class EventResponse(BaseModel):
     id: int

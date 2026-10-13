@@ -4,9 +4,9 @@ from fastapi.staticfiles import StaticFiles
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from app.database import Base, engine
-from app.models import User, Event, Booking, Ticket, Notification
+from app.models import User, Event, Booking, Ticket, Notification, Payment, Coupon, Review
 
-from app.routers import auth, user, event, booking, ticket, notification, admin
+from app.routers import auth, user, event, booking, ticket, notification, admin, payment, coupon, review
 from app.services.reminder import create_event_reminders
 from app.services.event_status import update_event_statuses
 
@@ -70,6 +70,9 @@ app.include_router(booking.router)
 app.include_router(ticket.router)
 app.include_router(notification.router)
 app.include_router(admin.router)
+app.include_router(payment.router)
+app.include_router(coupon.router)
+app.include_router(review.router)
 
 
 @app.get("/")

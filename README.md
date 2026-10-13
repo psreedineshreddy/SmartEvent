@@ -1,21 +1,21 @@
 # SmartEvent – Event Discovery & Ticket Booking System
 
-SmartEvent is a full-stack event discovery and ticket booking application built using FastAPI, SQLite, React, and JWT authentication.
+SmartEvent is a full-stack event discovery and ticket booking application built using FastAPI, SQLite, React, and JWT authentication. It provides event discovery, secure authentication, ticket booking, payment handling, reviews, notifications, organizer tools, and an admin dashboard.
 
 ## Features
 
 ### Authentication and Authorization
 - User registration and login
 - JWT-based authentication
-- Role-based access control (User, Organizer, and Admin)
-- Protected routes
+- Role-based access control: User, Organizer, and Admin
+- Protected routes and role-specific navigation
 
 ### Event Management
-- Event listing and event details
-- Event search and category filtering
+- Browse event listings and view event details
+- Search events and filter by category
 - Organizer event creation, editing, and management
-- Event booking overview
 - Event status updates and cancellation notices
+- Event organizer assignment
 
 ### Booking and Tickets
 - Ticket booking with quantity selection
@@ -25,15 +25,28 @@ SmartEvent is a full-stack event discovery and ticket booking application built 
 - QR code generation and verification
 - Booking confirmation notifications
 
+### Payments and Coupons
+- Payment records and checkout flow
+- Payment status and transaction details
+- Coupon validation
+- Discount calculation and application
+- Payment result page
+
+### Reviews and Ratings
+- Attendee-based event reviews
+- Ratings from 1 to 5
+- Review submission and management
+- Average event ratings and review counts
+
 ### Notifications and Insights
 - Booking notifications
 - Event cancellation and update notifications
 - Event reminders
+- Notification history and read status
 - Organizer insights and revenue statistics
 
 ### Admin Dashboard
-- Platform dashboard
-- Platform analytics
+- Platform dashboard and analytics
 - Top events overview
 - Date-based filtering
 - Users, events, and bookings overview
@@ -42,6 +55,9 @@ SmartEvent is a full-stack event discovery and ticket booking application built 
 - Responsive React interface
 - Role-specific navigation
 - Event status badges
+- Search, filtering, and sorting
+- Loading and error handling
+- Responsive layouts for different screen sizes
 
 ## Technologies
 
@@ -49,7 +65,7 @@ SmartEvent is a full-stack event discovery and ticket booking application built 
 - FastAPI
 - SQLAlchemy
 - SQLite
-- JWT
+- JWT authentication
 - bcrypt
 - Pydantic
 - APScheduler
@@ -62,7 +78,6 @@ SmartEvent is a full-stack event discovery and ticket booking application built 
 - Vite
 - CSS
 
-## Project Structure
 ## Project Structure
 
 ```text
@@ -87,8 +102,7 @@ SmartEvent/
 │   │   └── pages/
 │   ├── package.json
 │   └── vite.config.js
-├── Screenshots Phase 1/
-├── Phase 2 Screenshots/
+├── Modules 12-17 Screenshots/
 └── README.md
 ```
 
@@ -122,7 +136,9 @@ Frontend: http://localhost:5173
 
 ## Screenshots
 
-Phase 2 screenshots are stored in the `Phase2_Screenshots/` directory.
+Project screenshots are organized into the following directories:
+
+- `Modules 12-17 Screenshots/` – screenshots for Modules 12–17
 
 ## Event Images
 
@@ -132,7 +148,8 @@ Event images are stored in:
 backend/static/event_images/
 ```
 
-## Notes
+## Security Notes
 
-- The `.env` file contains the JWT secret and other environment settings. It should be excluded from Git using `.gitignore`.
-- Do not commit secrets, virtual environments, or generated cache files.
+- Keep `.env` out of Git because it contains the JWT secret and environment settings.
+- Do not commit virtual environments, generated caches, or other unnecessary local files.
+- Configure the required environment variables before starting the backend.

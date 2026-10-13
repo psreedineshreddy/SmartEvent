@@ -3,3 +3,6 @@ from app.models.event import Event
 from app.models.booking import Booking
 from app.models.ticket import Ticket
 from app.models.notification import Notification
+from app.models.payment import Payment
+from app.models.coupon import Coupon
+from app.models.review import Review

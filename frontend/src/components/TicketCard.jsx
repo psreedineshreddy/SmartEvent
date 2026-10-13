@@ -1,7 +1,9 @@
 const SERVER_URL = "http://127.0.0.1:8000";
 
-function TicketCard({ ticket, eventName, displayNumber }) {
+function TicketCard({ ticket, eventName, displayNumber, eventStatus }) {
   const qrUrl = `${SERVER_URL}${ticket.qr_code_url}`;
+
+  const status = (eventStatus || "UPCOMING").toUpperCase();
 
   const downloadQr = () => {
     const link = document.createElement("a");
@@ -22,6 +24,13 @@ function TicketCard({ ticket, eventName, displayNumber }) {
         <strong>{eventName}</strong>
       </div>
 
+      <div className="ticket-event-status">
+        <span>Event Status</span>
+        <strong className={`ticket-status ticket-status-${status.toLowerCase()}`}>
+          {status}
+        </strong>
+      </div>
+
       <div className="ticket-code">
         <span>Ticket Code</span>
         <strong>{ticket.ticket_code}</strong>
@@ -35,14 +44,10 @@ function TicketCard({ ticket, eventName, displayNumber }) {
       </div>
 
       <p className="ticket-created">
-        Created:{" "}
-        {new Date(ticket.created_at).toLocaleString()}
+        Created: {new Date(ticket.created_at).toLocaleString()}
       </p>
 
-      <button
-        className="primary-button"
-        onClick={downloadQr}
-      >
+      <button className="primary-button" onClick={downloadQr}>
         Download QR
       </button>
     </div>

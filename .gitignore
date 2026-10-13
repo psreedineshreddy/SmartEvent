@@ -3,25 +3,28 @@
 
 # Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
 
 # Backend virtual environment
 backend/venv/
 
-# Environment variables
+# Environment variables and secrets
+.env
 backend/.env
 
-# Database
-backend/smartevent.db
+# Databases and backups
+*.db
+*.sqlite
+*.sqlite3
+backend/*backup*
 
 # Generated QR codes
 backend/static/qr_codes/
 
-# Frontend dependencies
+# Frontend dependencies and build
 frontend/node_modules/
-
-# Frontend build
 frontend/dist/
-backend/smartevent_backup.db
+
+# Exclude earlier screenshots
+/Screenshots Phase 1/
+/Modules 07-11 Screenshots/
