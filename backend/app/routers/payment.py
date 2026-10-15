@@ -2,7 +2,13 @@ import os
 import uuid
 
 import qrcode
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    status,
+)
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -15,6 +21,7 @@ from app.models.ticket import Ticket
 from app.models.notification import Notification
 from app.models.coupon import Coupon
 from app.schemas.payment import PaymentCreate, PaymentResponse
+from app.services.availability import availability_manager
 from app.services.payment import generate_transaction_id, simulate_payment
 
 
@@ -41,7 +48,6 @@ def get_my_payments(
     )
 
 
-
 @router.post(
     "/",
     response_model=PaymentResponse,
@@ -49,13 +55,18 @@ def get_my_payments(
 )
 def create_payment(
     payment_data: PaymentCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(require_role("USER")),
 ):
-    booking = db.query(Booking).filter(
-        Booking.id == payment_data.booking_id,
-        Booking.user_id == current_user.id,
-    ).first()
+    booking = (
+        db.query(Booking)
+        .filter(
+            Booking.id == payment_data.booking_id,
+            Booking.user_id == current_user.id,
+        )
+        .first()
+    )
 
     if not booking:
         raise HTTPException(
@@ -69,10 +80,14 @@ def create_payment(
             detail="Only pending bookings can be paid",
         )
 
-    previous_success = db.query(Payment).filter(
-        Payment.booking_id == booking.id,
-        Payment.payment_status == "SUCCESS",
-    ).first()
+    previous_success = (
+        db.query(Payment)
+        .filter(
+            Payment.booking_id == booking.id,
+            Payment.payment_status == "SUCCESS",
+        )
+        .first()
+    )
 
     if previous_success:
         raise HTTPException(
@@ -80,9 +95,11 @@ def create_payment(
             detail="This booking has already been paid",
         )
 
-    event = db.query(Event).filter(
-        Event.id == booking.event_id
-    ).first()
+    event = (
+        db.query(Event)
+        .filter(Event.id == booking.event_id)
+        .first()
+    )
 
     if not event:
         raise HTTPException(
@@ -144,6 +161,7 @@ def create_payment(
             ticket_code = str(uuid.uuid4()).upper()
             qr_filename = f"{ticket_code}.png"
             qr_path = os.path.join(QR_DIR, qr_filename)
+
             qrcode.make(ticket_code).save(qr_path)
 
             db.add(
@@ -158,7 +176,9 @@ def create_payment(
                 Notification(
                     user_id=current_user.id,
                     title="Booking Confirmed",
-                    message=f"Your booking for {event.title} is confirmed.",
+                    message=(
+                        f"Your booking for {event.title} is confirmed."
+                    ),
                     type="BOOKING",
                     is_read=False,
                 )
@@ -183,6 +203,17 @@ def create_payment(
 
         db.commit()
         db.refresh(payment)
+
+        # Broadcast restored tickets only after a failed payment
+        # has been successfully committed to the database.
+        if not success:
+            db.refresh(event)
+            background_tasks.add_task(
+                availability_manager.broadcast,
+                event.id,
+                event.available_tickets,
+            )
+
         return payment
 
     except Exception as exc:
@@ -190,6 +221,9 @@ def create_payment(
 
         if qr_path and os.path.exists(qr_path):
             os.remove(qr_path)
+
+        if isinstance(exc, HTTPException):
+            raise
 
         if isinstance(exc, SQLAlchemyError):
             raise HTTPException(

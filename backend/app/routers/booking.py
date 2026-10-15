@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -6,8 +7,8 @@ from app.database import get_db
 from app.dependencies import require_role
 from app.models.booking import Booking
 from app.models.event import Event
-from app.models.coupon import Coupon
 from app.schemas.booking import BookingCreate, BookingResponse
+from app.services.availability import availability_manager
 from app.services.coupon import validate_and_calculate_discount
 
 
@@ -36,15 +37,21 @@ def booking_response(booking, event_title):
 )
 def create_booking(
     booking_data: BookingCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(require_role("USER")),
 ):
-    event = db.query(Event).filter(
-        Event.id == booking_data.event_id
-    ).first()
+    event = (
+        db.query(Event)
+        .filter(Event.id == booking_data.event_id)
+        .first()
+    )
 
     if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Event not found",
+        )
 
     if event.event_status in ["CANCELLED", "COMPLETED"]:
         raise HTTPException(
@@ -52,15 +59,11 @@ def create_booking(
             detail="Event is not available for booking",
         )
 
-    if event.available_tickets < booking_data.ticket_quantity:
-        raise HTTPException(
-            status_code=400,
-            detail="Not enough tickets available",
-        )
-
     total_price = round(
-        event.ticket_price * booking_data.ticket_quantity, 2
+        event.ticket_price * booking_data.ticket_quantity,
+        2,
     )
+
     coupon = None
     discount_amount = 0.0
     final_amount = total_price
@@ -68,12 +71,59 @@ def create_booking(
     if booking_data.coupon_code:
         coupon, discount_amount, final_amount = (
             validate_and_calculate_discount(
-                db, booking_data.coupon_code, total_price
+                db,
+                booking_data.coupon_code,
+                total_price,
             )
         )
 
     try:
-        event.available_tickets -= booking_data.ticket_quantity
+        # Atomically reserve tickets to prevent overbooking.
+        reservation = db.execute(
+            update(Event)
+            .where(
+                Event.id == event.id,
+                Event.available_tickets >= booking_data.ticket_quantity,
+                Event.event_status.notin_(
+                    ["CANCELLED", "COMPLETED"]
+                ),
+            )
+            .values(
+                available_tickets=(
+                    Event.available_tickets
+                    - booking_data.ticket_quantity
+                )
+            )
+        )
+
+        if reservation.rowcount != 1:
+            db.rollback()
+
+            latest_event = (
+                db.query(Event)
+                .filter(Event.id == booking_data.event_id)
+                .first()
+            )
+
+            if not latest_event:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Event not found",
+                )
+
+            if latest_event.event_status in [
+                "CANCELLED",
+                "COMPLETED",
+            ]:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Event is not available for booking",
+                )
+
+            raise HTTPException(
+                status_code=400,
+                detail="Not enough tickets available",
+            )
 
         booking = Booking(
             user_id=current_user.id,
@@ -88,7 +138,16 @@ def create_booking(
 
         db.add(booking)
         db.commit()
+
         db.refresh(booking)
+        db.refresh(event)
+
+        # Notify connected event-detail pages after the commit.
+        background_tasks.add_task(
+            availability_manager.broadcast,
+            event.id,
+            event.available_tickets,
+        )
 
         return booking_response(booking, event.title)
 
@@ -111,6 +170,7 @@ def get_my_bookings(
         .filter(Booking.user_id == current_user.id)
         .all()
     )
+
     return [
         booking_response(booking, event_title)
         for booking, event_title in bookings
@@ -131,6 +191,7 @@ def get_organizer_bookings(
         .filter(Event.organizer_id == current_user.id)
         .all()
     )
+
     return [
         booking_response(booking, event_title)
         for booking, event_title in bookings

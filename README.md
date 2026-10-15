@@ -1,77 +1,74 @@
 # SmartEvent – Event Discovery & Ticket Booking System
 
-SmartEvent is a full-stack event discovery and ticket booking application built using FastAPI, SQLite, React, and JWT authentication. It provides event discovery, secure authentication, ticket booking, payment handling, reviews, notifications, organizer tools, and an admin dashboard.
+SmartEvent is a full-stack event discovery and ticket-booking application built with FastAPI, React, SQLite, and JWT authentication. It supports attendees, organizers, and administrators, along with event booking, simulated payments, event updates, and personalized discovery features.
 
 ## Features
 
-### Authentication and Authorization
-- User registration and login
-- JWT-based authentication
-- Role-based access control: User, Organizer, and Admin
-- Protected routes and role-specific navigation
+### 1. Accounts and Access
 
-### Event Management
-- Browse event listings and view event details
-- Search events and filter by category
-- Organizer event creation, editing, and management
-- Event status updates and cancellation notices
-- Event organizer assignment
+- User registration and login with JWT authentication.
+- Role-based access for USER, ORGANIZER, and ADMIN.
+- User profile and booking summary.
+- Protected routes and role-specific navigation.
 
-### Booking and Tickets
-- Ticket booking with quantity selection
-- Ticket availability validation
-- Booking history
-- Unique ticket codes
-- QR code generation and verification
-- Booking confirmation notifications
+### 2. Events and Discovery
 
-### Payments and Coupons
-- Payment records and checkout flow
-- Payment status and transaction details
-- Coupon validation
-- Discount calculation and application
-- Payment result page
+- Browse and search events.
+- Filter by category, location, event date range, and ticket-price range.
+- Sort by date, price, or popularity.
+- Personalized recommendations based on viewed events and confirmed bookings.
+- Recommended and trending event sections.
+- Live ticket availability using WebSockets.
+- Event status updates and organizer-posted announcements.
 
-### Reviews and Ratings
-- Attendee-based event reviews
-- Ratings from 1 to 5
-- Review submission and management
-- Average event ratings and review counts
+### 3. Booking and Tickets
 
-### Notifications and Insights
-- Booking notifications
-- Event cancellation and update notifications
-- Event reminders
-- Notification history and read status
-- Organizer insights and revenue statistics
+- Ticket quantity selection and availability checks.
+- Booking history and confirmation.
+- Unique ticket codes and QR-code support.
+- Booking notifications and event reminders.
 
-### Admin Dashboard
-- Platform dashboard and analytics
-- Top events overview
-- Date-based filtering
-- Users, events, and bookings overview
+### 4. Payments and Coupons
 
-### User Interface
-- Responsive React interface
-- Role-specific navigation
-- Event status badges
-- Search, filtering, and sorting
-- Loading and error handling
-- Responsive layouts for different screen sizes
+- Payment checkout and payment records.
+- Simulated payment flow with transaction references.
+- Coupon validation and discount calculation.
+- Payment result and history pages.
 
-## Technologies
+**Note:** The payment service uses simulation. It is not a live payment gateway.
+
+### 5. Reviews, Wishlist, and Chatbot
+
+- Event reviews and 1–5-star ratings.
+- Save and remove events from a wishlist.
+- AI chatbot for event discovery and booking-related help.
+- Chatbot suggestions and context from upcoming events and the signed-in user's bookings.
+- Gemini API configuration for chatbot functionality.
+
+### 6. Organizer and Admin Tools
+
+- Organizers can create and manage their events.
+- Organizers can view bookings for their events.
+- Admin pages for users, events, bookings, and platform analytics.
+- Notifications for bookings and event updates.
+
+## Technology Stack
 
 ### Backend
+
+- Python
 - FastAPI
 - SQLAlchemy
 - SQLite
-- JWT authentication
-- bcrypt
 - Pydantic
+- JWT authentication
 - APScheduler
 - QRCode
+- WebSockets
+- Google GenAI SDK
 
 ### Frontend
+
 - React
 - React Router
 - Axios
@@ -85,15 +82,14 @@ SmartEvent/
 ├── backend/
 │   ├── app/
 │   │   ├── models/
-│   │   ├── schemas/
 │   │   ├── routers/
+│   │   ├── schemas/
 │   │   └── services/
 │   ├── static/
 │   │   ├── event_images/
 │   │   └── qr_codes/
 │   ├── requirements.txt
-│   ├── seed.py
-│   └── .env
+│   └── seed.py
 ├── frontend/
 │   ├── src/
 │   │   ├── api/
@@ -102,54 +98,94 @@ SmartEvent/
 │   │   └── pages/
 │   ├── package.json
 │   └── vite.config.js
-├── Modules 12-17 Screenshots/
+├── Phase 1-3 screenshots/
+├── Phase 4 Screenshots/
 └── README.md
 ```
 
-## Backend Setup
+## Setup and Installation
 
-Open a terminal and run:
+### 1. Backend Setup
+
+Open a terminal and navigate to the backend directory:
 
 ```bash
-cd backend
+cd ~/Downloads/SmartEvent/backend
+```
+
+Create and activate a Python virtual environment:
+
+```bash
 python3 -m venv venv
 source venv/bin/activate
+```
+
+Install the backend dependencies:
+
+```bash
 pip install -r requirements.txt
+```
+
+Create a `backend/.env` file and configure the required environment variables. Set a strong `SECRET_KEY` and configure `GEMINI_API_KEY` if you want to use the AI chatbot.
+
+**Never share or commit real API keys or secrets.**
+
+Start the backend:
+
+```bash
 uvicorn app.main:app --reload
 ```
 
-Backend API: http://127.0.0.1:8000
+- Backend API:** http://127.0.0.1:8000
+- Swagger API documentation:** http://127.0.0.1:8000/docs
 
-Swagger documentation: http://127.0.0.1:8000/docs
+### 2. Frontend Setup
 
-## Frontend Setup
-
-Open another terminal and run:
+Open a second terminal:
 
 ```bash
-cd frontend
+cd ~/Downloads/SmartEvent/frontend
+```
+
+Install dependencies:
+
+```bash
 npm install
+```
+
+Start the frontend:
+
+```bash
 npm run dev
 ```
 
-Frontend: http://localhost:5173
+Open the local URL printed by Vite, usually http://localhost:5173.
+
+### Live Ticket Availability
+
+The WebSocket endpoint for event ticket availability is:
+
+```text
+ws://127.0.0.1:8000/ws/events/{event_id}/availability
+```
+
+Replace `{event_id}` with the event ID you want to monitor.
 
 ## Screenshots
 
-Project screenshots are organized into the following directories:
+- `Phase 1-3 screenshots/` – Screenshots from the earlier project phases.
+- `Phase 4 Screenshots/` – Screenshots covering live ticket availability, recommendations, wishlist actions, event updates, profile summary, advanced search filters, chatbot responses, and Swagger APIs.
 
-- `Modules 12-17 Screenshots/` – screenshots for Modules 12–17
+## Security and Local Development
 
-## Event Images
+- Keep `.env` files and API keys out of version control and shared archives.
+- Do not distribute local SQLite databases or backups that may contain account and booking data.
+- Exclude `venv/`, `node_modules/`, `dist/`, and `__pycache__/` from source submissions.
+- The backend uses SQLite for local development. Database tables are initialized by the application.
+- Configure CORS appropriately if the frontend runs on a different origin.
+- Use a strong, private JWT secret and never expose authentication tokens.
+- The simulated payment service does not process real payments.
 
-Event images are stored in:
+## Development Notes
 
-```text
-backend/static/event_images/
-```
-
-## Security Notes
-
-- Keep `.env` out of Git because it contains the JWT secret and environment settings.
-- Do not commit virtual environments, generated caches, or other unnecessary local files.
-- Configure the required environment variables before starting the backend.
+Run the backend and frontend in separate terminals during local development. Configure the backend environment variables before starting the application. Refer to `/docs` to inspect available API operations.

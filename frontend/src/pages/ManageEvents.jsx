@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
@@ -105,14 +106,19 @@ function ManageEvents() {
                   <span>📍 Location</span>
                   <strong>{event.location}</strong>
                 </div>
+
                 <div>
                   <span>🎟️ Available Tickets</span>
                   <strong>{event.available_tickets}</strong>
                 </div>
+
                 <div>
                   <span>💰 Ticket Price</span>
-                  <strong>₹{Number(event.ticket_price).toLocaleString("en-IN")}</strong>
+                  <strong>
+                    ₹{Number(event.ticket_price).toLocaleString("en-IN")}
+                  </strong>
                 </div>
+
                 <div>
                   <span>📅 Event Date</span>
                   <strong>
@@ -128,6 +134,15 @@ function ManageEvents() {
 
               <div className="manage-event-actions">
                 <button
+                  type="button"
+                  className="manage-edit-button"
+                  onClick={() => navigate(`/events/${event.id}`)}
+                >
+                  View Event
+                </button>
+
+                <button
+                  type="button"
                   className="manage-edit-button"
                   onClick={() =>
                     navigate(`/organizer/events/edit/${event.id}`)
@@ -139,6 +154,7 @@ function ManageEvents() {
                 {event.event_status !== "CANCELLED" &&
                   event.event_status !== "COMPLETED" && (
                     <button
+                      type="button"
                       className="manage-cancel-button"
                       onClick={() => handleCancel(event.id)}
                     >

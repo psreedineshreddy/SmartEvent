@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { useState } from "react";
 
@@ -20,7 +19,9 @@ const defaultFallback =
 
 function EventCard({ event }) {
   const [imageSrc, setImageSrc] = useState(
-    event.banner_image || categoryFallbacks[event.category] || defaultFallback
+    event.banner_image ||
+      categoryFallbacks[event.category] ||
+      defaultFallback
   );
   const [fallbackUsed, setFallbackUsed] = useState(false);
 

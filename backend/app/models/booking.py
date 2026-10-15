@@ -1,4 +1,3 @@
-
 from sqlalchemy import Column, Integer, Float, String, DateTime, ForeignKey
 from datetime import datetime, timezone
 

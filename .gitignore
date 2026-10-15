@@ -25,6 +25,14 @@ backend/static/qr_codes/
 frontend/node_modules/
 frontend/dist/
 
-# Exclude earlier screenshots
-/Screenshots Phase 1/
-/Modules 07-11 Screenshots/
+# Environment files
+backend/.envx
+
+# Local databases and backups
+*.db
+*.sqlite
+*.sqlite3
+
+# Dependencies and generated files
+frontend/node_modules/
+frontend/dist/

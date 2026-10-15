@@ -23,6 +23,9 @@ import AdminBookings from "./pages/AdminBookings";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import Payments from "./pages/Payments";
 import PaymentMethods from "./pages/PaymentMethods";
+import Wishlist from "./pages/Wishlist";
+import Profile from "./pages/Profile";
+import ChatbotWidget from "./components/ChatbotWidget";
 
 function App() {
   return (
@@ -32,11 +35,18 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        {/* EVENT DETAILS — USER, ORGANIZER, ADMIN */}
+<Route
+  element={
+    <ProtectedRoute allowedRoles={["USER", "ORGANIZER", "ADMIN"]} />
+  }
+>
+  <Route path="/events/:eventId" element={<EventDetails />} />
+</Route>
 
         {/* USER ROUTES */}
         <Route element={<ProtectedRoute allowedRoles={["USER"]} />}>
           <Route path="/" element={<Home />} />
-          <Route path="/events/:eventId" element={<EventDetails />} />
           <Route path="/payment-checkout" element={<PaymentCheckout />} />
           <Route path="/payment-methods" element={<PaymentMethods />} />
           <Route
@@ -47,6 +57,8 @@ function App() {
           <Route path="/booking-history" element={<BookingHistory />} />
           <Route path="/tickets" element={<Tickets />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
 
         {/* ORGANIZER ROUTES */}
@@ -72,6 +84,7 @@ function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+       <ChatbotWidget />
     </>
   );
 }
